@@ -11,6 +11,7 @@ function buildInput(overrides: Partial<BuildBaseListsInput> = {}): BuildBaseList
         landingNodes: [],
         lowCostNodes: [],
         nonLandingNodes: [],
+        tailscaleNodes: [],
         regexFilter: false,
         regions: { mode: "flattened", groupedCountries: [], flattenedNodes: [] },
         ...overrides,
@@ -22,17 +23,9 @@ describe("buildBaseLists", () => {
         const lists = buildBaseLists(buildInput());
 
         assert.deepEqual(lists.defaultFallback, []);
-        assert.deepEqual(lists.defaultSelector, [PROXY_GROUPS.MANUAL, "DIRECT"]);
-        assert.deepEqual(lists.defaultProxies, [
-            PROXY_GROUPS.SELECT,
-            PROXY_GROUPS.MANUAL,
-            "DIRECT",
-        ]);
-        assert.deepEqual(lists.defaultProxiesDirect, [
-            "DIRECT",
-            PROXY_GROUPS.SELECT,
-            PROXY_GROUPS.MANUAL,
-        ]);
+        assert.deepEqual(lists.defaultSelector, ["DIRECT"]);
+        assert.deepEqual(lists.defaultProxies, ["DIRECT"]);
+        assert.deepEqual(lists.defaultProxiesDirect, ["DIRECT"]);
         assert.deepEqual(lists.frontProxySelector, ["DIRECT"]);
     });
 
@@ -55,9 +48,23 @@ describe("buildBaseLists", () => {
             PROXY_GROUPS.MANUAL,
             "DIRECT",
         ]);
+        assert.deepEqual(lists.defaultProxies, [
+            PROXY_GROUPS.SELECT,
+            PROXY_GROUPS.LANDING,
+            "香港节点",
+            PROXY_GROUPS.MANUAL,
+            "DIRECT",
+        ]);
+        assert.deepEqual(lists.defaultProxiesDirect, [
+            "DIRECT",
+            PROXY_GROUPS.LANDING,
+            "香港节点",
+            PROXY_GROUPS.SELECT,
+            PROXY_GROUPS.MANUAL,
+        ]);
     });
 
-    it("展平模式下直接使用非落地节点，不引用地区组", () => {
+    it("展平模式下直接使用非落地节点，不引用地区组或手动选择组", () => {
         const lists = buildBaseLists(
             buildInput({
                 nonLandingNodes: [{ name: "香港01" }, { name: "香港02" }],
@@ -69,19 +76,16 @@ describe("buildBaseLists", () => {
             })
         );
 
-        assert.deepEqual(lists.defaultSelector, [
-            { proxies: ["香港01", "香港02"] },
-            PROXY_GROUPS.MANUAL,
-            "DIRECT",
-        ]);
+        assert.deepEqual(lists.defaultSelector, [{ proxies: ["香港01", "香港02"] }, "DIRECT"]);
         assert.deepEqual(lists.defaultFallback, [{ proxies: ["香港01", "香港02"] }]);
-        assert.deepEqual(lists.defaultProxies, [
-            PROXY_GROUPS.SELECT,
-            PROXY_GROUPS.MANUAL,
-            "DIRECT",
-        ]);
+        assert.deepEqual(lists.defaultProxies, [{ proxies: ["香港01", "香港02"] }, "DIRECT"]);
+        assert.deepEqual(lists.defaultProxiesDirect, ["DIRECT", { proxies: ["香港01", "香港02"] }]);
         assert.deepEqual(lists.frontProxySelector, ["DIRECT", "香港01", "香港02"]);
         assert.ok(!lists.defaultSelector.some((item) => String(item).includes("香港节点")));
+        assert.ok(!lists.defaultProxies.some((item) => String(item).includes(PROXY_GROUPS.SELECT)));
+        assert.ok(
+            !lists.defaultProxiesDirect.some((item) => String(item).includes(PROXY_GROUPS.SELECT))
+        );
     });
 
     it("展平 + regex 使用 include-all，并排除落地节点", () => {
@@ -107,8 +111,19 @@ describe("buildBaseLists", () => {
             PROXY_GROUPS.LANDING,
             { "include-all": true, "exclude-filter": "^(?:落地A)$" },
             PROXY_GROUPS.LOW_COST,
-            PROXY_GROUPS.MANUAL,
             "DIRECT",
+        ]);
+        assert.deepEqual(lists.defaultProxies, [
+            PROXY_GROUPS.LANDING,
+            { "include-all": true, "exclude-filter": "^(?:落地A)$" },
+            PROXY_GROUPS.LOW_COST,
+            "DIRECT",
+        ]);
+        assert.deepEqual(lists.defaultProxiesDirect, [
+            "DIRECT",
+            PROXY_GROUPS.LANDING,
+            { "include-all": true, "exclude-filter": "^(?:落地A)$" },
+            PROXY_GROUPS.LOW_COST,
         ]);
         // 前置代理必须显式枚举非落地节点，避免与落地节点的 dialer-proxy 形成循环。
         assert.deepEqual(lists.frontProxySelector, ["DIRECT", "香港01"]);
@@ -126,10 +141,19 @@ describe("buildBaseLists", () => {
         assert.deepEqual(lists.defaultSelector, [
             PROXY_GROUPS.LANDING,
             PROXY_GROUPS.LOW_COST,
-            PROXY_GROUPS.MANUAL,
             "DIRECT",
         ]);
         assert.deepEqual(lists.defaultFallback, [PROXY_GROUPS.LANDING]);
+        assert.deepEqual(lists.defaultProxies, [
+            PROXY_GROUPS.LANDING,
+            PROXY_GROUPS.LOW_COST,
+            "DIRECT",
+        ]);
+        assert.deepEqual(lists.defaultProxiesDirect, [
+            "DIRECT",
+            PROXY_GROUPS.LANDING,
+            PROXY_GROUPS.LOW_COST,
+        ]);
         assert.deepEqual(lists.frontProxySelector, ["DIRECT"]);
     });
 
@@ -152,5 +176,48 @@ describe("buildBaseLists", () => {
             "include-all": true,
             "exclude-filter": "^(?:落地\\(A\\.1\\))$",
         });
+    });
+
+    it("展平 + regex 同时排除落地节点与 Tailscale 节点", () => {
+        const tailscale = { name: "Tailscale出口", type: "tailscale" };
+        const lists = buildBaseLists(
+            buildInput({
+                landing: true,
+                landingNodes: [{ name: "落地A", "dialer-proxy": "前置代理" }],
+                nonLandingNodes: [{ name: "香港01" }, tailscale],
+                tailscaleNodes: [tailscale],
+                regexFilter: true,
+                regions: {
+                    mode: "flattened",
+                    groupedCountries: [],
+                    flattenedNodes: [{ name: "香港01" }],
+                },
+            })
+        );
+
+        const expectedSource = {
+            "include-all": true,
+            "exclude-filter": "^(?:落地A|Tailscale出口)$",
+        };
+        assert.deepEqual(lists.defaultSelector[1], expectedSource);
+        assert.deepEqual(lists.defaultProxies[1], expectedSource);
+        assert.deepEqual(lists.defaultProxiesDirect[2], expectedSource);
+        // 前置代理显式枚举非落地节点时也不能包含 Tailscale。
+        assert.deepEqual(lists.frontProxySelector, ["DIRECT", "香港01"]);
+    });
+
+    it("分组模式下前置代理排除 Tailscale 节点", () => {
+        const tailscale = { name: "Tailscale出口", type: "tailscale" };
+        const lists = buildBaseLists(
+            buildInput({
+                landing: true,
+                landingNodes: [{ name: "落地A", "dialer-proxy": "前置代理" }],
+                nonLandingNodes: [{ name: "香港01" }, tailscale],
+                tailscaleNodes: [tailscale],
+                regions: { mode: "grouped", groupedCountries: ["香港"], flattenedNodes: [] },
+            })
+        );
+
+        assert.deepEqual(lists.frontProxySelector, ["香港节点", "DIRECT", "香港01"]);
     });
 });

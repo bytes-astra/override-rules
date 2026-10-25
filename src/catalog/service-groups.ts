@@ -8,7 +8,7 @@
 import { COUNTRY_KEYS } from "./countries";
 import { countryGroupName, PROXY_GROUPS } from "./group-names";
 import { ICONS } from "./icons";
-import type { GroupBuildContext } from "../types/proxy";
+import type { GroupBuildContext, ProxyGroupCandidate } from "../types/proxy";
 
 export interface ServiceGroupDef {
     /** 代理组显示名称。 */
@@ -18,7 +18,23 @@ export interface ServiceGroupDef {
     /** 是否附加 `include-all: true`。 */
     includeAll?: boolean;
     /** 根据构建上下文返回候选代理列表。 */
-    proxies: (ctx: GroupBuildContext) => string[];
+    proxies: (ctx: GroupBuildContext) => ProxyGroupCandidate[];
+}
+
+/**
+ * 将「低倍率节点」组移到候选列表最前，其余候选保持原有顺序。
+ *
+ * `defaultProxies` 已按当前模式决定是否包含低倍率组；仅当它确实存在时调整顺序，
+ * 避免在未生成低倍率组时产生悬空引用。
+ */
+function prioritizeLowCost(ctx: GroupBuildContext): ProxyGroupCandidate[] {
+    const { defaultProxies } = ctx.lists;
+    if (!defaultProxies.includes(PROXY_GROUPS.LOW_COST)) return defaultProxies;
+
+    return [
+        PROXY_GROUPS.LOW_COST,
+        ...defaultProxies.filter((candidate) => candidate !== PROXY_GROUPS.LOW_COST),
+    ];
 }
 
 /** 服务代理组，按输出顺序排列。 */
@@ -26,7 +42,7 @@ export const serviceGroups: ServiceGroupDef[] = [
     {
         name: PROXY_GROUPS.STATIC_RESOURCES,
         icon: ICONS.staticResources,
-        proxies: (ctx) => ctx.lists.defaultProxies,
+        proxies: prioritizeLowCost,
     },
     {
         name: PROXY_GROUPS.AI_SERVICE,
