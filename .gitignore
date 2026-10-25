@@ -4,6 +4,7 @@ node_modules/
 # Build artifacts
 convert.js
 convert.min.js
+override-rules.substore.js
 yamls/
 
 # Logs
