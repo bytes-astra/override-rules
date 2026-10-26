@@ -18,6 +18,9 @@
  * 为每个地区构造足量节点，使全部地区组都被生成，
  * 组内节点仍由内核按 countriesMeta 的正则在运行时筛选。
  *
+ * 分组顺序：「选择代理」「自动选择」「手动选择」「故障转移」置于最前，
+ * 其余分组保持内核产出的原有相对顺序。
+ *
  * 用法：
  * - `npm run extract` —— 使用全地区节点集，输出 `override-rules.js`
  * - `npm run extract -- --input <fixture.json>` —— 指定节点夹具
@@ -32,6 +35,7 @@ import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 
 import { countriesMeta } from "../src/catalog/countries";
+import { PROXY_GROUPS } from "../src/catalog/group-names";
 import type { ClashConfig } from "../src/types/clash";
 import type { ProxyNode } from "../src/types/proxy";
 
@@ -151,6 +155,19 @@ function runConvert(baseConfig: ClashConfig, groupType: string): ClashConfig {
 const INDENT = "  ";
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
+/**
+ * 置于覆写脚本最前的分组，数组顺序即展示顺序。
+ *
+ * 内核把「自动选择」「故障转移」放在尾部，把「选择代理」「手动选择」放在最前；
+ * 覆写脚本面向手动挑选场景，这里统一把四个常用分组提到最前，其余分组保持原有相对顺序。
+ */
+const FRONT_GROUP_NAMES = [
+    PROXY_GROUPS.SELECT,
+    PROXY_GROUPS.AUTO,
+    PROXY_GROUPS.MANUAL,
+    PROXY_GROUPS.FALLBACK,
+] as const;
+
 /** rule-providers 的字段顺序，按覆写脚本的常见写法排列。 */
 const PROVIDER_FIELD_ORDER = ["url", "path", "behavior", "interval", "format", "type"];
 
@@ -223,9 +240,36 @@ function reorderProviders(providers: Record<string, JsonValue>): Record<string, 
     return result;
 }
 
+/** 取出代理组的名称；非对象或缺少名称时返回 undefined。 */
+function groupName(group: JsonValue): string | undefined {
+    if (group === null || typeof group !== "object" || Array.isArray(group)) return undefined;
+    const name = (group as { name?: unknown }).name;
+    return typeof name === "string" ? name : undefined;
+}
+
+/**
+ * 把 `FRONT_GROUP_NAMES` 中的分组按声明顺序移到最前，其余分组保持原有相对顺序。
+ *
+ * 目标分组缺失时（例如展平模式下没有「手动选择」）自动跳过，不报错。
+ */
+function reorderGroups(groups: JsonValue[]): JsonValue[] {
+    const front: JsonValue[] = [];
+    const taken = new Set<JsonValue>();
+
+    for (const name of FRONT_GROUP_NAMES) {
+        const group = groups.find(
+            (candidate) => !taken.has(candidate) && groupName(candidate) === name
+        );
+        if (group === undefined) continue;
+        front.push(group);
+        taken.add(group);
+    }
+
+    return [...front, ...groups.filter((group) => !taken.has(group))];
+}
+
 /** 组装完整的覆写脚本文本。 */
-function buildScript(config: ClashConfig, groupType: string): string {
-    const groups = (config["proxy-groups"] ?? []) as unknown as JsonValue;
+function buildScript(config: ClashConfig, groupType: string, groups: JsonValue[]): string {
     const providers = reorderProviders(
         (config["rule-providers"] ?? {}) as unknown as Record<string, JsonValue>
     );
@@ -262,7 +306,8 @@ export function main(): void {
 
     const options = parseOptions(process.argv.slice(2));
     const config = runConvert(loadInputConfig(options.input), options.groupType);
-    const script = buildScript(config, options.groupType);
+    const orderedGroups = reorderGroups((config["proxy-groups"] ?? []) as unknown as JsonValue[]);
+    const script = buildScript(config, options.groupType, orderedGroups);
 
     const outFile = path.resolve(options.out);
     writeFileSync(outFile, script, "utf-8");
@@ -273,12 +318,17 @@ export function main(): void {
     const regionGroups = groups
         .map((group) => group.name)
         .filter((name) => name.endsWith("节点") && name !== "低倍率节点");
+    const presentNames = new Set(
+        orderedGroups.map((group) => groupName(group)).filter((name) => name !== undefined)
+    );
+    const frontGroups = FRONT_GROUP_NAMES.filter((name) => presentNames.has(name));
 
     const relativeOut = path.relative(process.cwd(), outFile);
     console.log(`已生成 ${relativeOut.startsWith("..") ? outFile : relativeOut}`);
     console.log(`  proxy-groups  : ${groups.length} 组`);
     console.log(`  rule-providers: ${Object.keys(providers).length} 个`);
     console.log(`  rules         : ${rules.length} 条`);
+    console.log(`  前置分组       : ${frontGroups.join(", ")}`);
     console.log(`  地区组         : ${regionGroups.length} 个（${regionGroups.join(", ")}）`);
 }
 
