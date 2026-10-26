@@ -14,7 +14,7 @@ export default [
             "yamls/**",
             "convert.js",
             "convert.min.js",
-            "override-rules.substore.js",
+            "override-rules.js",
             "node_modules/**",
         ],
     },

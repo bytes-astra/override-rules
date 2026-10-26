@@ -1,16 +1,16 @@
 /**
- * Sub-Store 覆写脚本提取器
+ * 静态覆写规则提取器
  *
  * 载入 convert.js，以固定参数调用其 main(config)，把 `proxy-groups`、
- * `rule-providers`、`rules` 三段提取为 Sub-Store 覆写脚本形态：
+ * `rule-providers`、`rules` 三段提取为静态覆写脚本形态：
  *
  * ```js
- * function main(config) {
+ * const main = (config) => {
  *   config["proxy-groups"] = [...];
  *   config["rule-providers"] = {...};
  *   config["rules"] = [...];
  *   return config;
- * }
+ * };
  * ```
  *
  * 与 YAML 生成器的区别：YAML 生成器用 fake_proxies.json 模拟订阅，
@@ -19,7 +19,7 @@
  * 组内节点仍由内核按 countriesMeta 的正则在运行时筛选。
  *
  * 用法：
- * - `npm run extract` —— 使用全地区节点集，输出 `override-rules.substore.js`
+ * - `npm run extract` —— 使用全地区节点集，输出 `override-rules.js`
  * - `npm run extract -- --input <fixture.json>` —— 指定节点夹具
  * - `npm run extract -- --grouptype 0` —— 地区组改为 select
  * - `npm run extract -- --out <file.js>` —— 指定输出路径
@@ -40,7 +40,7 @@ const __dirname = path.dirname(__filename);
 
 const BASE_DIR = path.resolve(__dirname, "..");
 const CONVERT_FILE = path.join(BASE_DIR, "convert.js");
-const DEFAULT_OUT_FILE = path.join(BASE_DIR, "override-rules.substore.js");
+const DEFAULT_OUT_FILE = path.join(BASE_DIR, "override-rules.js");
 
 /** 提取时固定传给 convert.js 的参数；`regex=true` 让内核按正则筛选节点。 */
 const SCRIPT_ARGS = {
@@ -244,12 +244,12 @@ function buildScript(config: ClashConfig, groupType: string): string {
 
     return [
         header,
-        "function main(config) {",
+        "const main = (config) => {",
         `  config["proxy-groups"] = ${formatValue(groups, 1)};`,
         `  config["rule-providers"] = ${formatValue(providers, 1)};`,
         `  config["rules"] = ${formatValue(rules, 1)};`,
         "  return config;",
-        "}",
+        "};",
         "",
     ].join("\n");
 }
