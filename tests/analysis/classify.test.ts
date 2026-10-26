@@ -75,6 +75,21 @@ describe("analyzeNodes", () => {
         );
     });
 
+    it("识别整数倍率节点名（1x），但不收 2x/3x/5x", () => {
+        const nodes: ProxyNode[] = [
+            { name: "香港游戏 | 2x HK" },
+            { name: "阿联酋住宅 | 5x AE" },
+            { name: "阿富汗 | 3x AF" },
+            { name: "比利时 | 1x BE" },
+            { name: "香港普通" },
+        ];
+        const analysis = analyzeNodes(nodes, 2);
+        assert.deepEqual(
+            analysis.lowCostNodes.map((n) => n.name),
+            ["比利时 | 1x BE"]
+        );
+    });
+
     it("识别 Tailscale 节点", () => {
         assert.equal(result.hasTailscale, true);
         assert.deepEqual(
