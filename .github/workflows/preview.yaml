@@ -42,11 +42,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p publish/yamls
+          mkdir -p publish
 
-          cp convert.js publish/convert.js
-          cp convert.min.js publish/convert.min.js
-          cp -a yamls/. publish/yamls/
+          cp override-rules.js publish/override-rules.js
 
           RELEASED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           export RELEASED_AT

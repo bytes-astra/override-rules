@@ -11,7 +11,7 @@
     "generate": "tsx scripts/yaml_generator/generator.ts",
     "extract": "tsx scripts/static-override-rules-extractor.ts",
     "test": "node --import tsx --test \"tests/**/*.test.ts\"",
-    "artifacts": "npm run build && npm run generate",
+    "artifacts": "npm run build && npm run extract",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

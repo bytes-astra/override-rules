@@ -49,14 +49,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p publish/yamls
+          mkdir -p publish
 
-          cp convert.js publish/convert.js
-          cp convert.min.js publish/convert.min.js
-          cp -a yamls/. publish/yamls/
-
-          # Package yamls.tar.gz for release assets
-          tar -czvf yamls.tar.gz yamls/
+          cp override-rules.js publish/override-rules.js
 
           RELEASED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           export RELEASED_AT
@@ -147,10 +142,10 @@ jobs:
           
           构建产物已同步并放于根目录。
 
-          - JS 覆写 (最新版, 推荐)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}/convert.min.js`
-          - JS 覆写 (当前版本)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/convert.min.js`
-          - YAML 索引 (最新版)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}/manifest.json`
-          - YAML 索引 (当前版本)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/manifest.json`
+          - 静态覆写脚本 (最新版)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}/override-rules.js`
+          - 静态覆写脚本 (当前版本)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/override-rules.js`
+          - 校验索引 (最新版)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}/manifest.json`
+          - 校验索引 (当前版本)：`https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/manifest.json`
           EOF
 
       - name: Create GitHub release
@@ -159,13 +154,11 @@ jobs:
           tag_name: ${{ env.VERSION }}
           body_path: RELEASE_NOTES.md
           files: |
-            convert.js
-            convert.min.js
-            yamls.tar.gz
+            override-rules.js
 
       - name: Purge jsDelivr cache
         run: |
           set -euo pipefail
 
-          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}/convert.min.js"
-          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/convert.min.js"
+          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}/override-rules.js"
+          curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/override-rules.js"
