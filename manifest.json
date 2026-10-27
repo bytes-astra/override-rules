@@ -1,0 +1,12 @@
+{
+  "tag": "v2.9.2",
+  "commit": "ff425ccac62bb97f3865d6edab0ef982d05211e1",
+  "releasedAt": "2026-10-27T12:23:22Z",
+  "fileCount": 1,
+  "files": [
+    {
+      "path": "override-rules.js",
+      "sha256": "9897b3f02c3de7eb894d9a63e496a1dddf4f57f9972f8261a41b6429ae91cf81"
+    }
+  ]
+}
