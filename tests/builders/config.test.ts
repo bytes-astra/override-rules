@@ -363,6 +363,29 @@ describe("assembleConfig", () => {
         );
     });
 
+    it("regex 低倍率组排除落地节点与 Tailscale", () => {
+        const result = run(
+            { regex: "true" },
+            {
+                proxies: [
+                    { name: "香港01" },
+                    { name: "香港02" },
+                    { name: "日本01" },
+                    { name: "日本02" },
+                    { name: "香港 0.5x" },
+                    { name: "香港 落地 0.5x", "dialer-proxy": "前置代理" },
+                    { name: "Tailscale出口", type: "tailscale" },
+                ],
+            }
+        );
+
+        // 落地节点不参与低倍率分类，regex 模式靠 include-all 取节点时必须显式排除。
+        assert.equal(
+            group(result, PROXY_GROUPS.LOW_COST)?.["exclude-filter"],
+            "^(?:香港 落地 0\\.5x|Tailscale出口)$"
+        );
+    });
+
     it("regex 展平模式同时排除落地节点与 Tailscale", () => {
         const result = run(
             { regex: "true" },
