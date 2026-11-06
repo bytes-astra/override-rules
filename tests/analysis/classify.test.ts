@@ -90,6 +90,21 @@ describe("analyzeNodes", () => {
         );
     });
 
+    it("倍率必须以完整数值出现，不收 10.5x / 20.5 这类更长数字", () => {
+        const nodes: ProxyNode[] = [
+            { name: "香港 10.5x" },
+            { name: "HK 20.5 大带宽" },
+            { name: "香港 0.5x" },
+            { name: "香港 0.25x" },
+            { name: "0.5倍速" },
+        ];
+        const analysis = analyzeNodes(nodes, 2);
+        assert.deepEqual(
+            analysis.lowCostNodes.map((n) => n.name),
+            ["香港 0.5x", "香港 0.25x", "0.5倍速"]
+        );
+    });
+
     it("识别 Tailscale 节点", () => {
         assert.equal(result.hasTailscale, true);
         assert.deepEqual(

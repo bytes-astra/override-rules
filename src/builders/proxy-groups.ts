@@ -85,6 +85,12 @@ function buildRegionGroups(ctx: GroupBuildContext): Array<ProxyGroup | null> {
     const { flags, nodes } = ctx;
     const hasLowCost = nodes.lowCostNodes.length > 0 || flags.regexFilter;
     const tailscaleExcludeFilter = buildNodeExcludeFilter(nodes.tailscaleNodes);
+    // 落地节点不参与低倍率分类（见 analyzeNodes），regex 模式靠 include-all 动态取节点时
+    // 必须显式排除，否则「香港 落地 0.5x」这类落地节点会混进低倍率组。
+    const lowCostExcludeFilter = buildNodeExcludeFilter([
+        ...nodes.landingNodes,
+        ...nodes.tailscaleNodes,
+    ]);
 
     const lowCostGroup = hasLowCost
         ? buildGroupByType({
@@ -96,9 +102,7 @@ function buildRegionGroups(ctx: GroupBuildContext): Array<ProxyGroup | null> {
                   : {
                         "include-all": true as const,
                         filter: LOW_COST_NODE_MATCHER.pattern,
-                        ...(tailscaleExcludeFilter
-                            ? { "exclude-filter": tailscaleExcludeFilter }
-                            : {}),
+                        ...(lowCostExcludeFilter ? { "exclude-filter": lowCostExcludeFilter } : {}),
                     },
           })
         : null;
