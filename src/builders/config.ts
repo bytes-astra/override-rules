@@ -4,7 +4,7 @@
 
 import { PROXY_GROUPS } from "../catalog/group-names";
 import { ICONS } from "../catalog/icons";
-import { ruleSets } from "../catalog/rule-sets";
+import { adblockAlternatives, ruleSets } from "../catalog/rule-sets";
 import { buildDns } from "./dns";
 import { buildFullConfig } from "./full-config";
 import { geoxUrl } from "./geox";
@@ -49,13 +49,28 @@ export function assembleConfig(
     config: ClashConfig,
     { flags, nodes, proxyGroups }: AssembleConfigInput
 ): ClashConfig {
+    const { ADBlock, AdditionalFilter, ...baseRuleSets } = ruleSets;
+    const adblockProvider =
+        flags.adblockSource === 0
+            ? undefined
+            : flags.adblockSource === 2
+              ? ADBlock
+              : adblockAlternatives[flags.adblockSource];
+
     return {
         proxies: config.proxies,
         ...(config.hosts !== undefined && { hosts: config.hosts }),
         ...(flags.fullConfig && buildFullConfig(flags)),
         "proxy-groups": appendGlobalGroup(proxyGroups),
-        "rule-providers": ruleSets,
-        rules: buildRules({ quicEnabled: flags.quicEnabled, hasTailscale: nodes.hasTailscale }),
+        "rule-providers": {
+            ...baseRuleSets,
+            ...(adblockProvider && { ADBlock: adblockProvider, AdditionalFilter }),
+        },
+        rules: buildRules({
+            quicEnabled: flags.quicEnabled,
+            hasTailscale: nodes.hasTailscale,
+            adblockSource: flags.adblockSource,
+        }),
         sniffer: snifferConfig,
         dns: buildDns({
             fakeIPEnabled: flags.fakeIPEnabled,
