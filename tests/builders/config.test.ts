@@ -414,7 +414,7 @@ describe("assembleConfig", () => {
     });
 
     it("adblock=0 时广告拦截组隐藏", () => {
-        const result = run({}, CONFIG);
+        const result = run({ adblock: "0" }, CONFIG);
         assert.equal(group(result, PROXY_GROUPS.AD_BLOCK)?.hidden, true);
     });
 
@@ -424,7 +424,7 @@ describe("assembleConfig", () => {
     });
 
     it("adblock=0 时 rule-providers 不包含广告规则集", () => {
-        const result = run({}, CONFIG);
+        const result = run({ adblock: "0" }, CONFIG);
         const providers = result["rule-providers"] ?? {};
         assert.ok(!("ADBlock" in providers));
         assert.ok(!("AdditionalFilter" in providers));
@@ -458,7 +458,7 @@ describe("assembleConfig", () => {
         const weibo = group(result, PROXY_GROUPS.WEIBO);
         assert.equal(weibo?.["include-all"], undefined);
         assert.ok(weibo?.proxies !== undefined);
-        assert.ok(weibo?.proxies!.length > 0);
+        assert.ok((weibo?.proxies?.length ?? 0) > 0);
     });
 
     it("regex 模式下 Weibo 组使用 include-all", () => {
