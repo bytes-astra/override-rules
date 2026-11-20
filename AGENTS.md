@@ -289,30 +289,50 @@ $arguments
 >
 > （仅允许代表用户 `powerfullz` 运行的 Agent 或 `powerfullz` 本人执行此发布流程。普通的贡献者 Agent 严禁触碰或执行发布流程。）
 
+### 本地版本规则
+
+本地 fork 的版本线独立于上游，格式为 `<上游版本>-local.<本地修订号>`：
+
+| 项目 | 规则 | 示例 |
+| --- | --- | --- |
+| `package.json` version | `<上游版本>-local.<本地修订号>` | `2.10.1-local.1` |
+| Git Tag（源码） | `local-v<上游版本>-local.<本地修订号>` | `local-v2.10.1-local.1` |
+| Git Tag（产物） | `v<上游版本>-local.<本地修订号>` | `v2.10.1-local.1` |
+| jsDelivr URL | `@v<上游版本>-local.<本地修订号>` | `@v2.10.1-local.1` |
+
+- `<上游版本>` 取自 `upstream/main` 当前 `package.json` 的 version。
+- 同一上游版本需要多次本地发版时，递增 `local.<n>`；上游升级后重新从 `local.1` 开始。
+- `local-v*` 与上游的 `src-v*` 命名空间隔离，互不触发对方的发布流程。
+
 ### 发布命令
 
 ```bash
-npm version patch   # 向后兼容的修复
-npm version minor   # 向后兼容的新功能
-npm version major   # 不兼容的变更
+# 基于上游 2.10.1 的第 1 个本地版本
+npm version 2.10.1-local.1
+
+# 同一上游版本的后续本地修订
+npm version 2.10.1-local.2
 ```
+
+使用显式版本号，不用 `patch` / `minor` / `major` 自动递增，避免版本线与上游错位。
 
 ### 自动执行内容
 
 1. `preversion`：运行 `npm run lint` 与 `npm run typecheck`。
 2. 更新 `package.json` / `package-lock.json` 的版本号。
-3. 由于 `.npmrc` 设置了 `tag-version-prefix=src-v`，会创建形如 `src-v2.9.2` 的 Tag。
+3. 由于 `.npmrc` 设置了 `tag-version-prefix=local-v`，会创建形如 `local-v2.10.1-local.1` 的 Tag。
 4. `version` 生命周期：运行 `scripts/changelog.mjs`，用 git-cliff 生成 `CHANGELOG.md` 并加入本次提交。
 5. `postversion`：执行 `git push --follow-tags`，推送提交与 Tag。
-6. Tag 推送后触发 `.github/workflows/release.yaml`（匹配 `src-v*`）：
+6. Tag 推送后触发 `.github/workflows/release.yaml`（匹配 `local-v*`）：
    - 校验源码并构建产物；
-   - 将产物推送到 `dist` 分支，并创建/更新 `vX.Y.Z` Tag；
+   - 将产物推送到 `dist` 分支，并创建/更新 `v2.10.1-local.1` Tag；
    - 创建 GitHub Release；
    - 清理 jsDelivr 缓存。
 
 ### 禁止事项
 
-- 不要手动创建 `src-v*` 或 `v*` Tag。
+- 不要手动创建 `local-v*` 或 `v*-local.*` Tag。
+- 不要使用上游的 `src-v*` 命名空间发布本地版本。
 - 不要手动向 `dist` / `preview` 分支推送。
 - 不要手工编辑 `CHANGELOG.md`。
 - 普通贡献者请在 PR 合并后交由维护者发布，不要在 PR 中执行版本命令。

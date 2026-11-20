@@ -48,7 +48,7 @@
 
 > **⚠️ 注意**：普通贡献者无需处理版本发布。
 
-发布新版本（例如 `npm version patch/minor/major`）和创建 GitHub Releases 仅允许由项目维护者（`powerfullz`）或代表其运行的授权 AI Agent 操作。请在 PR 合并后交由维护者处理版本更新。
+发布新版本（例如 `npm version 2.10.1-local.1`，本地版本号格式为 `<上游版本>-local.<本地修订号>`）和创建 GitHub Releases 仅允许由项目维护者或代表其运行的授权 AI Agent 操作。请在 PR 合并后交由维护者处理版本更新，详见 [`AGENTS.md` 第 11 节](../AGENTS.md#11-发布流程仅限授权者)。
 
 ---
 
