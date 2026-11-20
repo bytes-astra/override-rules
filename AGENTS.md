@@ -298,28 +298,39 @@ $arguments
 
 ### 本地版本规则
 
-本地 fork 跟随上游版本号，与 `upstream/main` 的 `package.json` version 保持一致：
+本地 fork 尽量跟随上游版本号，但**版本号必须严格递增、永不复用**：jsDelivr 对 exact version tag 永久缓存，同一版本号即使删除重建也无法更新内容。
+
+发版时取以下两者中较大的一个作为版本号；若与本地已发布的最大版本相同，则 patch +1：
+
+- `upstream/main` 的 `package.json` version；
+- 本地已发布的最大版本（包含已删除 tag 的版本号）。
+
+| 场景 | 上游版本 | 本地已发布最大 | 本次发布 |
+| --- | --- | --- | --- |
+| 首次跟随上游 | `2.10.1` | — | `2.10.1` |
+| 补发（旧 `2.10.1` 已被 jsDelivr 永久缓存） | `2.10.1` | `2.10.1` | `2.10.2` |
+| 上游发新版 | `2.11.0` | `2.10.2` | `2.11.0` |
+| 上游发了本地已用的号 | `2.10.2` | `2.10.2` | `2.10.3` |
 
 | 项目 | 规则 | 示例 |
 | --- | --- | --- |
-| `package.json` version | 与上游相同 | `2.10.1` |
-| Git Tag（源码） | `local-v<版本>` | `local-v2.10.1` |
-| Git Tag（产物） | `v<版本>`（纯 semver） | `v2.10.1` |
-| jsDelivr URL | `@v<版本>` | `@v2.10.1` |
+| `package.json` version | 按上述规则计算 | `2.10.2` |
+| Git Tag（源码） | `local-v<版本>` | `local-v2.10.2` |
+| Git Tag（产物） | `v<版本>`（纯 semver） | `v2.10.2` |
+| jsDelivr URL | `@v<版本>` | `@v2.10.2` |
 
-- 版本号取自 `upstream/main` 当前 `package.json` 的 version。
 - 产物 Tag 必须是纯 `vX.Y.Z`：jsDelivr 会把带 `-local.N` 之类后缀的版本当作 prerelease 忽略，导致「不带版本」的链接解析到旧版本。
 - `local-v*` 与上游的 `src-v*` 命名空间隔离，互不触发对方的发布流程。
-- 同一上游版本只能对应一个本地版本；需要基于同一上游再发一次时，递增 patch（如 `2.10.2`）。
+- 不要重用任何曾经发布过的版本号，即使对应 tag 已被删除。
 
 ### 发布命令
 
 ```bash
-# 同步上游后，发与上游相同版本号的本地版
-npm version 2.10.1
+# 2.10.1 已发布过且被 jsDelivr 永久缓存，本次 patch +1
+npm version 2.10.2
 ```
 
-使用显式版本号，不用 `patch` / `minor` / `major` 自动递增，确保与上游版本对齐。
+使用显式版本号，不用 `patch` / `minor` / `major` 自动递增。
 
 ### 自动执行内容
 
