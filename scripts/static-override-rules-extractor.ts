@@ -81,11 +81,12 @@ function parseOptions(argv: string[]): ExtractOptions {
 
     for (let index = 0; index < argv.length; index++) {
         const arg = argv[index];
-        const value = argv[index + 1];
 
-        if (value === undefined || value.startsWith("--")) {
+        if (index + 1 >= argv.length || argv[index + 1].startsWith("--")) {
             throw new Error(`参数 ${arg} 缺少取值`);
         }
+
+        const value = argv[index + 1];
 
         if (arg === "--input") {
             options.input = value;
@@ -140,6 +141,7 @@ function runConvert(baseConfig: ClashConfig, groupType: string): ClashConfig {
     };
 
     vm.createContext(sandbox);
+    // eslint-disable-next-line sonarjs/code-eval -- 运行本项目自己构建的 convert.js，输入可控
     vm.runInContext(code, sandbox, { filename: "convert.js" });
 
     if (typeof sandbox.main !== "function") {
