@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.10.1-local.1](https://github.com/bytes-astra/override-rules/compare/src-v2.10.1...local-v2.10.1-local.1) (2026-11-20)
+## [2.10.1](https://github.com/bytes-astra/override-rules/compare/src-v2.10.1...local-v2.10.1) (2026-11-20)
 
 
 ### Bug Fixes
@@ -11,6 +11,7 @@
 
 ### Build
 
+- Follow upstream version numbers ([6f5c53d](https://github.com/bytes-astra/override-rules/commit/6f5c53db9059fcf728a9a82f4296ecde72d74495))
 - Recognize legacy src-v tags in changelog ([fc8921f](https://github.com/bytes-astra/override-rules/commit/fc8921ffff947176e6e4224b44e654cd25da90ea))
 - Adopt upstream-anchored local versioning ([d00314c](https://github.com/bytes-astra/override-rules/commit/d00314cbc77026fb0758306b9c2cb406a3bba29a))
 
@@ -28,6 +29,7 @@
 
 ### Documentation
 
+- Update versioning rule to follow upstream ([b6cc84b](https://github.com/bytes-astra/override-rules/commit/b6cc84be90fbb095eaf9cdc4a0f263787b28e9f0))
 - Document code quality tooling in AGENTS.md ([74b198f](https://github.com/bytes-astra/override-rules/commit/74b198f6a73e51efa3fb44323a74522153210348))
 - Update docs ([96f25ee](https://github.com/bytes-astra/override-rules/commit/96f25eee62151540fc81886e0d84cd2e79074290))
 - Document the local versioning rule ([fda414f](https://github.com/bytes-astra/override-rules/commit/fda414f431d7a3d5e138de029f3dbde0877d8398))
