@@ -123,7 +123,19 @@ $arguments
 
 ## 5. 标准开发流程
 
-1. 从 `main` 创建独立分支，避免直接在主分支上开发。
+### 分支模型：`main` 是上游镜像，开发在 `local`
+
+- `main` 只用于跟踪上游 `powerfullz/override-rules`，不接受本地提交，永远通过 `git merge --ff-only upstream/main` 快进同步。
+- 所有本地定制（静态覆写脚本、发布链路等）都在 `local` 分支上开发；CI 与 preview 工作流也由 `local` 触发。
+- 同步上游后，把 `upstream/main` 合并进 `local`：
+
+  ```bash
+  git fetch upstream
+  git checkout main && git merge --ff-only upstream/main && git push origin main
+  git checkout local && git merge upstream/main
+  ```
+
+1. 从 `local` 创建特性分支，避免直接在该分支上开发。
 2. 阅读第 7 节，确认需求对应的修改入口。
 3. 修改 `.ts` 源码，必要时补充测试。
 4. 格式化并修复 lint：
@@ -264,7 +276,8 @@ $arguments
   - `npm run lint`
   - `npm run artifacts`
 - CI 不单独运行 `npm test`，请在本地确保测试通过。
-- 不要直接向 `main` 强推，也不要向 `dist` / `preview` 提交。
+- `main` 只允许通过 `git merge --ff-only upstream/main` 快进同步，不要在其上直接提交或强推；日常开发提交到 `local` 或从 `local` 拉出的特性分支。
+- 不要向 `dist` / `preview` 提交。
 
 ---
 
