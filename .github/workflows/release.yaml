@@ -22,9 +22,9 @@ jobs:
 
       - name: Derive version from source tag
         run: |
-          # local-vX.Y.Z-local.N → vX.Y.Z-local.N
+          # local-vX.Y.Z → vX.Y.Z
           VERSION="${LOCAL_TAG#local-}"
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-local\.[0-9]+$ ]]; then
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Invalid version derived from tag: '$VERSION' (source: '$LOCAL_TAG')"
             exit 1
           fi
