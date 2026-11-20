@@ -17,7 +17,7 @@ trim = true
 conventional_commits = true
 filter_unconventional = false
 filter_commits = false
-tag_pattern = "local-v[0-9].*"
+tag_pattern = "(?:local-v|src-v)[0-9].*"
 sort_commits = "newest"
 
 commit_parsers = [
