@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.10.2](https://github.com/bytes-astra/override-rules/compare/local-v2.10.1...local-v2.10.2) (2026-11-20)
+
+
+### Documentation
+
+- Define non-reusable version numbering rule ([88ca513](https://github.com/bytes-astra/override-rules/commit/88ca5136b814726070fefad236435a8225f2f365))
 ## [2.10.1](https://github.com/bytes-astra/override-rules/compare/src-v2.10.1...local-v2.10.1) (2026-11-20)
 
 
