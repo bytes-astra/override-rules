@@ -298,48 +298,47 @@ $arguments
 
 ### 本地版本规则
 
-本地 fork 的版本线独立于上游，格式为 `<上游版本>-local.<本地修订号>`：
+本地 fork 跟随上游版本号，与 `upstream/main` 的 `package.json` version 保持一致：
 
 | 项目 | 规则 | 示例 |
 | --- | --- | --- |
-| `package.json` version | `<上游版本>-local.<本地修订号>` | `2.10.1-local.1` |
-| Git Tag（源码） | `local-v<上游版本>-local.<本地修订号>` | `local-v2.10.1-local.1` |
-| Git Tag（产物） | `v<上游版本>-local.<本地修订号>` | `v2.10.1-local.1` |
-| jsDelivr URL | `@v<上游版本>-local.<本地修订号>` | `@v2.10.1-local.1` |
+| `package.json` version | 与上游相同 | `2.10.1` |
+| Git Tag（源码） | `local-v<版本>` | `local-v2.10.1` |
+| Git Tag（产物） | `v<版本>`（纯 semver） | `v2.10.1` |
+| jsDelivr URL | `@v<版本>` | `@v2.10.1` |
 
-- `<上游版本>` 取自 `upstream/main` 当前 `package.json` 的 version。
-- 同一上游版本需要多次本地发版时，递增 `local.<n>`；上游升级后重新从 `local.1` 开始。
+- 版本号取自 `upstream/main` 当前 `package.json` 的 version。
+- 产物 Tag 必须是纯 `vX.Y.Z`：jsDelivr 会把带 `-local.N` 之类后缀的版本当作 prerelease 忽略，导致「不带版本」的链接解析到旧版本。
 - `local-v*` 与上游的 `src-v*` 命名空间隔离，互不触发对方的发布流程。
+- 同一上游版本只能对应一个本地版本；需要基于同一上游再发一次时，递增 patch（如 `2.10.2`）。
 
 ### 发布命令
 
 ```bash
-# 基于上游 2.10.1 的第 1 个本地版本
-npm version 2.10.1-local.1
-
-# 同一上游版本的后续本地修订
-npm version 2.10.1-local.2
+# 同步上游后，发与上游相同版本号的本地版
+npm version 2.10.1
 ```
 
-使用显式版本号，不用 `patch` / `minor` / `major` 自动递增，避免版本线与上游错位。
+使用显式版本号，不用 `patch` / `minor` / `major` 自动递增，确保与上游版本对齐。
 
 ### 自动执行内容
 
 1. `preversion`：运行 `npm run lint` 与 `npm run typecheck`。
 2. 更新 `package.json` / `package-lock.json` 的版本号。
-3. 由于 `.npmrc` 设置了 `tag-version-prefix=local-v`，会创建形如 `local-v2.10.1-local.1` 的 Tag。
+3. 由于 `.npmrc` 设置了 `tag-version-prefix=local-v`，会创建形如 `local-v2.10.1` 的 Tag。
 4. `version` 生命周期：运行 `scripts/changelog.mjs`，用 git-cliff 生成 `CHANGELOG.md` 并加入本次提交。
 5. `postversion`：执行 `git push --follow-tags`，推送提交与 Tag。
 6. Tag 推送后触发 `.github/workflows/release.yaml`（匹配 `local-v*`）：
    - 校验源码并构建产物；
-   - 将产物推送到 `dist` 分支，并创建/更新 `v2.10.1-local.1` Tag；
+   - 将产物推送到 `dist` 分支，并创建/更新 `v2.10.1` Tag；
    - 创建 GitHub Release；
    - 清理 jsDelivr 缓存。
 
 ### 禁止事项
 
-- 不要手动创建 `local-v*` 或 `v*-local.*` Tag。
+- 不要手动创建 `local-v*` 或 `v*` Tag。
 - 不要使用上游的 `src-v*` 命名空间发布本地版本。
+- 不要给产物 Tag 加 prerelease 后缀（如 `-local.1`）。
 - 不要手动向 `dist` / `preview` 分支推送。
 - 不要手工编辑 `CHANGELOG.md`。
 - 普通贡献者请在 PR 合并后交由维护者发布，不要在 PR 中执行版本命令。

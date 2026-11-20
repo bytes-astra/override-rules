@@ -167,9 +167,9 @@ npm run artifacts
 
 1. **启用 GitHub Actions**：由于你使用的是 Fork 后的仓库，请前往你仓库的 **Actions** 标签页，点击 "I understand my workflows, go ahead and enable them" 以启用自动化工作流。
 2. **提交代码**：将你修改后的源码（如 `src/` 下的内容）提交并推送到你的 GitHub 仓库。
-3. **触发发布**：通过创建并推送 Tag 来触发自动构建和发布。本地版本号格式为 `<上游版本>-local.<本地修订号>`，推荐使用显式版本号：
+3. **触发发布**：通过创建并推送 Tag 来触发自动构建和发布。本地版本号与上游 `upstream/main` 保持一致，推荐使用显式版本号：
    ```bash
-   npm version 2.10.1-local.1
+   npm version 2.10.1
    ```
    > **注意**：由于 `package.json` 中配置了相关的生命周期钩子，上述命令会自动运行代码测试、更新版本号、生成更新日志（CHANGELOG），并将带有标签的提交推送至远程仓库以触发 CI 工作流。版本规则详见 [`AGENTS.md` 第 11 节](../AGENTS.md#11-发布流程仅限授权者)。
 4. **等待自动构建**：回到 GitHub 仓库的 Actions 页面，等待名为 "Release Artifacts" 的工作流执行完毕。该工作流会自动将编译压缩后的最终产物推送到 `dist` 分支。
