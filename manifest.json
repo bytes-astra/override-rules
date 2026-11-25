@@ -1,0 +1,12 @@
+{
+  "tag": "v2.10.3",
+  "commit": "50c649db663eb9071a0a89703b6b765f4bb237a1",
+  "releasedAt": "2026-11-25T13:56:02Z",
+  "fileCount": 1,
+  "files": [
+    {
+      "path": "override-rules.js",
+      "sha256": "538ba182fa3869cc93b38528b1bf5b6797f914f76df9a4408b3797458c568f9b"
+    }
+  ]
+}
