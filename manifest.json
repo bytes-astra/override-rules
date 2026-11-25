@@ -1,0 +1,12 @@
+{
+  "tag": "preview",
+  "commit": "38e3aae000e0972167e1e2d85ae12a1e88b457fd",
+  "releasedAt": "2026-11-25T13:57:05Z",
+  "fileCount": 1,
+  "files": [
+    {
+      "path": "override-rules.js",
+      "sha256": "538ba182fa3869cc93b38528b1bf5b6797f914f76df9a4408b3797458c568f9b"
+    }
+  ]
+}
